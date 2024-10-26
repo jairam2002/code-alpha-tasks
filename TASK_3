@@ -1,0 +1,138 @@
+import os
+import shutil
+import pandas as pd
+import tempfile
+import logging
+
+# Set up logging configuration
+logging.basicConfig(filename='automation_log.txt', level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+def organize_files(directory):
+    """Organize files in the specified directory by moving them into folders based on file type."""
+    if not os.path.exists(directory):
+        print(f"Error: The directory '{directory}' does not exist.")
+        logging.error(f"Directory '{directory}' does not exist.")
+        return
+
+    try:
+        # List all files in the directory
+        for filename in os.listdir(directory):
+            file_path = os.path.join(directory, filename)
+
+            # Skip directories
+            if os.path.isdir(file_path):
+                continue
+
+            # Get the file extension
+            file_extension = filename.split('.')[-1].lower()
+
+            # Create a new folder based on the file extension
+            folder_path = os.path.join(directory, file_extension)
+
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+                logging.info(f"Created directory: {folder_path}")
+
+            # Move the file to the corresponding folder
+            shutil.move(file_path, os.path.join(folder_path, filename))
+            logging.info(f"Moved file {filename} to {folder_path}")
+
+        print(f"Files in {directory} have been organized by file type.\n")
+        logging.info(f"Organized files in {directory} by file type.")
+
+    except Exception as e:
+        print(f"An error occurred while organizing files: {e}")
+        logging.error(f"Error organizing files in {directory}: {e}")
+
+def clean_csv(file_path):
+    """Clean a CSV file by filling missing values, removing duplicates, and converting date columns."""
+    if not os.path.isfile(file_path):
+        print(f"Error: The file '{file_path}' does not exist.")
+        logging.error(f"File '{file_path}' does not exist.")
+        return
+
+    try:
+        # Read the CSV file
+        df = pd.read_csv(file_path)
+        logging.info(f"Loaded CSV file: {file_path}")
+
+        # Fill missing values
+        df.fillna(method='ffill', inplace=True)
+        logging.info("Filled missing values using forward fill.")
+
+        # Drop duplicate rows
+        original_rows = len(df)
+        df.drop_duplicates(inplace=True)
+        logging.info(f"Removed {original_rows - len(df)} duplicate rows.")
+
+        # Convert data types (if a 'Date' column exists)
+        if 'Date' in df.columns:
+            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+            logging.info("Converted 'Date' column to datetime.")
+
+        # Save the cleaned file
+        cleaned_file_path = 'cleaned_' + os.path.basename(file_path)
+        df.to_csv(cleaned_file_path, index=False)
+        logging.info(f"Saved cleaned file as {cleaned_file_path}")
+
+        print(f"Data cleaning complete. Cleaned file saved as {cleaned_file_path}.\n")
+
+    except Exception as e:
+        print(f"An error occurred while cleaning the CSV file: {e}")
+        logging.error(f"Error cleaning CSV file {file_path}: {e}")
+
+def clear_temp_files():
+    """Delete all files and folders in the system's temporary directory."""
+    temp_dir = tempfile.gettempdir()
+    try:
+        # List all files and folders in the temporary directory
+        for item in os.listdir(temp_dir):
+            item_path = os.path.join(temp_dir, item)
+            try:
+                # Remove directories
+                if os.path.isdir(item_path):
+                    shutil.rmtree(item_path)
+                # Remove files
+                elif os.path.isfile(item_path):
+                    os.remove(item_path)
+                logging.info(f"Deleted: {item_path}")
+            except Exception as e:
+                logging.error(f"Error deleting {item_path}: {e}")
+
+        print("Temporary files have been cleared.\n")
+        logging.info("Cleared all temporary files.")
+
+    except Exception as e:
+        print(f"An error occurred while clearing temporary files: {e}")
+        logging.error(f"Error clearing temporary files: {e}")
+
+def main():
+    """Main function to run the automation tasks based on user selection."""
+    while True:
+        print("\nTask Automation Menu:")
+        print("1. Organize Files")
+        print("2. Clean CSV Data")
+        print("3. Clear Temporary Files")
+        print("4. Exit")
+        choice = input("Enter the number of the task you want to perform: ")
+
+        if choice == '1':
+            directory = input("Enter the path to the directory you want to organize: ").strip()
+            organize_files(directory)
+        elif choice == '2':
+            file_path = input("Enter the path to the CSV file you want to clean: ").strip()
+            clean_csv(file_path)
+        elif choice == '3':
+            clear_temp_files()
+        elif choice == '4':
+            print("Exiting the automation script. Goodbye!")
+            logging.info("Exited the automation script.")
+            break
+        else:
+            print("Invalid choice. Please select a valid option.\n")
+            logging.warning("Invalid menu selection.")
+
+if _name_ == "_main_":
+    # Run the main menu
+    main()
