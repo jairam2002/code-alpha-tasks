@@ -1,0 +1,62 @@
+import random
+
+def hangman():
+    # List of words for the game
+    words = ['python', 'development', 'hangman', 'programming', 'framework', 'algorithm']
+    word = random.choice(words)
+    guessed_letters = set()
+    correct_letters = set(word)
+    attempts = 6
+    word_display = ['_' for _ in word]
+
+    print("Welcome to Hangman Game!")
+    print("Guess the word, one letter at a time.")
+
+    while attempts > 0 and set(word_display) != correct_letters:
+        # Display the current word with guessed letters
+        print("\nWord: " + ' '.join(word_display))
+        print(f"Guessed letters: {', '.join(sorted(guessed_letters))}")
+        print(f"Attempts left: {attempts}")
+
+        # Player's guess
+        guess = input("Enter a letter: ").lower()
+        
+        # Check if the input is valid
+        if len(guess) != 1 or not guess.isalpha():
+            print("Please enter a valid single letter.")
+            continue
+
+        # Check if the letter has already been guessed
+        if guess in guessed_letters:
+            print("You've already guessed that letter. Try again.")
+            continue
+
+        # Add the guess to the set of guessed letters
+        guessed_letters.add(guess)
+
+        # Check if the guess is in the word
+        if guess in correct_letters:
+            print("Good guess!")
+            # Reveal the guessed letter in the word display
+            for idx, letter in enumerate(word):
+                if letter == guess:
+                    word_display[idx] = guess
+        else:
+            print("Wrong guess.")
+            attempts -= 1
+
+    # End of the game
+    if set(word_display) == correct_letters:
+        print("\nCongratulations! You've guessed the word:", word)
+    else:
+        print("\nYou've run out of attempts! The word was:", word)
+
+    # Restart option
+    play_again = input("\nDo you want to play again? (yes/no): ").lower()
+    if play_again == 'yes':
+        hangman()
+    else:
+        print("Thanks for playing! Goodbye.")
+
+# Start the game
+hangman()
